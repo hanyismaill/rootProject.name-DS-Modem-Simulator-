@@ -1,0 +1,2 @@
+rootProject.name = "iDIRECT-Modem-Simulator"
+include ':app'
