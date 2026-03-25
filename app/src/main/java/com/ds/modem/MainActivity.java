@@ -37,8 +37,7 @@ public class MainActivity extends AppCompatActivity {
                 screen.append("\n" + text + "\nPassword:");
                 input.setText("");
                 stage = 1;
-            }
-            else if (stage == 1) {
+            } else if (stage == 1) {
                 screen.append("\n****\n\nAccess Granted\n> ");
                 input.setText("");
                 stage = 2;
