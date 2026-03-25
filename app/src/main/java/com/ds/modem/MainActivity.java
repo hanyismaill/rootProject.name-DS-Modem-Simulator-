@@ -21,40 +21,18 @@ public class MainActivity extends AppCompatActivity {
         layout.setOrientation(LinearLayout.VERTICAL);
 
         screen = new TextView(this);
-        screen.setText("iDIRECT Modem Virtualization\n\nReady...\n\nUsername:");
+        screen.setText("iDIRECT Modem Virtualization\n\nReady...\n\nUsername: ");
 
         input = new EditText(this);
-        input.setHint("Enter username");
+        input.setHint("Type here...");
 
         layout.addView(screen);
         layout.addView(input);
 
         setContentView(layout);
 
-        // ENTER key listener (FIXED)
         input.setOnKeyListener((v, keyCode, event) -> {
             if (event.getAction() == KeyEvent.ACTION_DOWN &&
                 keyCode == KeyEvent.KEYCODE_ENTER) {
 
                 handleInput();
-                return true;
-            }
-            return false;
-        });
-    }
-
-    private void handleInput() {
-        String text = input.getText().toString();
-
-        if (stage == 0) {
-            screen.append("\n" + text + "\nPassword:");
-            input.setText("");
-            stage = 1;
-
-        } else if (stage == 1) {
-            screen.append("\n****\n\nAccess Granted\n> ");
-            input.setText("");
-            stage = 2;
-        }
-    }
-}
