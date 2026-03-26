@@ -2,9 +2,6 @@ package com.ds.modem;
 
 import android.os.Bundle;
 import android.view.KeyEvent;
-import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,10 +11,10 @@ import java.util.Random;
 public class MainActivity extends AppCompatActivity {
 
     TextView screen;
-    EditText input;
 
-    int stage = 0;
-    String username = "admin";
+    StringBuilder currentInput = new StringBuilder();
+    int stage = 0; // 0=username, 1=password, 2=cli
+    String username = "";
 
     Random random = new Random();
 
@@ -26,52 +23,72 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         screen = new TextView(this);
-        input = new EditText(this);
-
         screen.setTextSize(14);
-        input.setSingleLine(true);
-        input.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        screen.setFocusableInTouchMode(true);
+        screen.requestFocus();
 
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.addView(screen);
-        layout.addView(input);
-
-        setContentView(layout);
+        setContentView(screen);
 
         screen.setText("Username: ");
 
-        input.setOnKeyListener((v, keyCode, event) -> {
-            if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
+        screen.setOnKeyListener((v, keyCode, event) -> {
 
-                String text = input.getText().toString().trim();
-                input.setText("");
+            if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
 
-                if (!text.isEmpty()) {
-                    processInput(text);
-                }
-
+            // ENTER
+            if (keyCode == KeyEvent.KEYCODE_ENTER) {
+                processInput(currentInput.toString());
+                currentInput.setLength(0);
                 return true;
             }
-            return false;
+
+            // BACKSPACE
+            if (keyCode == KeyEvent.KEYCODE_DEL) {
+                if (currentInput.length() > 0) {
+                    currentInput.deleteCharAt(currentInput.length() - 1);
+                    removeLastChar();
+                }
+                return true;
+            }
+
+            // NORMAL CHAR
+            char c = (char) event.getUnicodeChar();
+            if (c != 0) {
+                currentInput.append(c);
+
+                // Hide password typing
+                if (stage == 1) {
+                    screen.append("*");
+                } else {
+                    screen.append(String.valueOf(c));
+                }
+            }
+
+            return true;
         });
     }
 
-    private void processInput(String text) {
+    private void processInput(String input) {
 
-        screen.append(text + "\n");
+        screen.append("\n");
 
         if (stage == 0) {
+            username = input;
             screen.append("Password: ");
             stage = 1;
 
         } else if (stage == 1) {
-            screen.append("********\n\n");
-            stage = 2;
-            printHeader();
+
+            if (username.equals("admin") && input.equals("admin")) {
+                stage = 2;
+                printHeader();
+            } else {
+                screen.append("Access Denied\n\nUsername: ");
+                stage = 0;
+            }
 
         } else if (stage == 2) {
-            handleCommand(text);
+            handleCommand(input);
         }
     }
 
@@ -85,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
     private void handleCommand(String cmd) {
 
         cmd = cmd.toLowerCase();
+
+        screen.append(cmd + "\n");
 
         if (cmd.equals("rx power")) {
             screen.append("Rx Power: -66.830002\n\n");
@@ -102,6 +121,13 @@ public class MainActivity extends AppCompatActivity {
             screen.append("Unknown Command: '" + cmd + "'\n\n");
         }
 
-        printHeader(); // IMPORTANT: repeat header every time
+        printHeader();
+    }
+
+    private void removeLastChar() {
+        String text = screen.getText().toString();
+        if (text.length() > 0) {
+            screen.setText(text.substring(0, text.length() - 1));
+        }
     }
 }
