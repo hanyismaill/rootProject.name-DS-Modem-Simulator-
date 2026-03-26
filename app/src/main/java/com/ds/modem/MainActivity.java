@@ -2,84 +2,115 @@ package com.ds.modem;
 
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView output;
+    TextView screen;
     EditText input;
 
-    int stage = 0;
+    int stage = 0; // 0=username, 1=password, 2=CLI
     String username = "";
-    String password = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Layout
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-
-        output = new TextView(this);
-        output.setTextSize(18);
-        output.setPadding(20, 40, 20, 20);
-
+        screen = new TextView(this);
         input = new EditText(this);
-        input.setHint("Type here...");
-        input.setSingleLine(true);
 
-        layout.addView(output);
+        screen.setTextSize(16);
+        input.setHint("");
+
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.addView(screen);
         layout.addView(input);
 
         setContentView(layout);
 
-        // Initial text
-        output.setText(
-                "iDIRECT Modem Virtualization\n\n" +
-                "Ready...\n\n" +
-                "Username: "
-        );
+        // Start directly like modem
+        screen.setText("Username: ");
 
-        // Handle Enter key
-        input.setOnKeyListener((v, keyCode, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN &&
-                keyCode == KeyEvent.KEYCODE_ENTER) {
+        input.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE ||
+                (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
 
-                handleInput(input.getText().toString().trim());
-                input.setText(""); // clear input
+                String text = input.getText().toString().trim();
+                input.setText("");
+
+                if (!text.isEmpty()) {
+                    processInput(text);
+                }
+
                 return true;
             }
             return false;
         });
     }
 
-    void handleInput(String text) {
+    private void processInput(String text) {
 
         if (stage == 0) {
             username = text;
-            output.append(username + "\nPassword: ");
+            screen.append(username + "\nPassword: ");
             stage = 1;
-        }
 
-        else if (stage == 1) {
-            password = text;
-            output.append("****\n");
+        } else if (stage == 1) {
+            screen.append("****\n");
 
-            if (username.equals("admin") && password.equals("admin")) {
-                output.append("\nAccess Granted\n>\n");
+            if (username.equals("admin") && text.equals("admin")) {
+                screen.append("\n");
                 stage = 2;
+                showPrompt();
             } else {
-                output.append("\nAccess Denied\n\nUsername: ");
+                screen.append("\nAccess Denied\n\nUsername: ");
                 stage = 0;
             }
-        }
 
-        else if (stage == 2) {
-            output.append("Executed: " + text + "\n>\n");
+        } else if (stage == 2) {
+            handleCommand(text);
         }
     }
-                            }
+
+    private void handleCommand(String cmd) {
+
+        cmd = cmd.toLowerCase();
+
+        screen.append(cmd + "\n");
+
+        switch (cmd) {
+
+            case "rx snr":
+                screen.append("12.5 dB\n");
+                break;
+
+            case "tx power":
+                screen.append("3.2 dBm\n");
+                break;
+
+            case "sn":
+                screen.append("DS-123456\n");
+                break;
+
+            case "clear":
+                screen.setText("");
+                showPrompt();
+                return;
+
+            default:
+                screen.append("Invalid command\n");
+                break;
+        }
+
+        showPrompt();
+    }
+
+    private void showPrompt() {
+        screen.append("> ");
+    }
+}
